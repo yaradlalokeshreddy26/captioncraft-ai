@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CaptionCraft AI — Social Post Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #0d0d0f;
+    --paper: #f7f5f0;
+    --accent: #5b3df5;
+    --accent2: #ff5c5c;
+    --muted: #8a8a94;
+    --card: #ffffff;
+    --border: #e2e2e8;
+    --glow: rgba(91,61,245,0.18);
+    --success: #22c55e;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--ink);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: grid; place-items: center;
+    font-size: 18px;
+  }
+  .logo-text {
+    font-family: 'Instrument Serif', serif;
+    font-size: 22px;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+  .logo-text span { color: var(--accent2); font-style: italic; }
+  .badge {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(91,61,245,0.15);
+    border: 1px solid rgba(91,61,245,0.3);
+    border-radius: 20px;
+    padding: 4px 12px;
+  }
+
+  /* ── Hero strip ── */
+  .hero {
+    background: linear-gradient(135deg, #1a1040 0%, #0d0d0f 60%, #1a0820 100%);
+    padding: 52px 32px 48px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 60% at 50% 0%, rgba(91,61,245,0.3) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero h1 {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(28px, 6vw, 52px);
+    color: #fff;
+    line-height: 1.15;
+    margin-bottom: 14px;
+    position: relative;
+  }
+  .hero h1 em {
+    font-style: italic;
+    background: linear-gradient(90deg, #a78bfa, var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero p {
+    color: #b0adc4;
+    font-size: 15px;
+    max-width: 480px;
+    margin: 0 auto 20px;
+    line-height: 1.6;
+    position: relative;
+  }
+  .iq-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: #c4bfdf;
+    position: relative;
+  }
+  .iq-dot { width: 6px; height: 6px; background: #a78bfa; border-radius: 50%; }
+
+  /* ── Main layout ── */
+  .main { max-width: 960px; margin: 0 auto; padding: 40px 20px 60px; }
+
+  /* ── Upload zone ── */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 20px;
+    padding: 48px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--card);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(91,61,245,0.03);
+    box-shadow: 0 0 0 4px var(--glow);
+  }
+  .upload-zone input { display: none; }
+  .upload-icon { font-size: 42px; margin-bottom: 12px; }
+  .upload-zone h3 { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+  .upload-zone p { font-size: 13px; color: var(--muted); }
+  .upload-zone .or { margin: 12px 0; font-size: 12px; color: var(--muted); }
+  .btn-upload {
+    display: inline-block;
+    margin-top: 4px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btn-upload:hover { opacity: 0.85; }
+
+  /* ── Preview + Controls ── */
+  .preview-section {
+    display: none;
+    gap: 24px;
+    margin-bottom: 28px;
+  }
+  .preview-section.visible { display: grid; grid-template-columns: 1fr 1fr; }
+  @media(max-width: 640px) { .preview-section.visible { grid-template-columns: 1fr; } }
+
+  .preview-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+  .preview-card img {
+    width: 100%; height: 260px;
+    object-fit: cover;
+    display: block;
+  }
+  .preview-label {
+    padding: 12px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+  }
+
+  .controls-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .controls-card h3 { font-size: 15px; font-weight: 600; }
+
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .toggle-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .toggle {
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    font-size: 13px;
+    font-family: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--ink);
+    transition: all 0.15s;
+  }
+  .toggle.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .btn-generate {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent), #7c3aed);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: auto;
+  }
+  .btn-generate:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+  .btn-generate:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  /* ── Results ── */
+  .results-section { display: none; }
+  .results-section.visible { display: block; }
+
+  .results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .results-header h2 {
+    font-family: 'Instrument Serif', serif;
+    font-size: 26px;
+  }
+  .lang-tab {
+    display: flex;
+    gap: 4px;
+    background: var(--border);
+    border-radius: 10px;
+    padding: 3px;
+  }
+  .lang-btn {
+    padding: 6px 16px;
+    border-radius: 8px;
+    border: none;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+  .lang-btn.active { background: var(--card); color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .post-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    overflow: hidden;
+    transition: box-shadow 0.15s;
+  }
+  .post-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
+
+  .post-card-head {
+    padding: 14px 16px 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .platform-icon {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    display: grid; place-items: center;
+    font-size: 17px;
+    flex-shrink: 0;
+  }
+  .post-card-head h4 { font-size: 14px; font-weight: 600; }
+  .post-card-head span { font-size: 11px; color: var(--muted); }
+
+  .post-body { padding: 14px 16px; }
+  .post-text {
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: #2a2a32;
+    white-space: pre-wrap;
+    min-height: 60px;
+  }
+  .post-tags {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .tag {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    background: rgba(91,61,245,0.08);
+    border-radius: 5px;
+    padding: 3px 7px;
+  }
+
+  .post-footer {
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+  }
+  .btn-copy {
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s;
+  }
+  .btn-copy:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-copy.copied { border-color: var(--success); color: var(--success); }
+
+  /* Caption card */
+  .caption-card {
+    background: linear-gradient(135deg, var(--ink) 0%, #1a1040 100%);
+    border-radius: 18px;
+    padding: 28px;
+    margin-bottom: 20px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+  .caption-card::before {
+    content: '"';
+    font-family: 'Instrument Serif', serif;
+    font-size: 120px;
+    color: rgba(255,255,255,0.06);
+    position: absolute;
+    top: -20px; left: 16px;
+    line-height: 1;
+  }
+  .caption-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #a78bfa;
+    margin-bottom: 12px;
+  }
+  .caption-text {
+    font-family: 'Instrument Serif', serif;
+    font-size: 22px;
+    line-height: 1.5;
+    font-style: italic;
+    position: relative;
+  }
+
+  /* Loading state */
+  .loading-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(13,13,15,0.7);
+    z-index: 100;
+    place-items: center;
+    backdrop-filter: blur(4px);
+  }
+  .loading-overlay.visible { display: grid; }
+  .loading-box {
+    background: var(--card);
+    border-radius: 24px;
+    padding: 40px 48px;
+    text-align: center;
+    max-width: 320px;
+  }
+  .spinner {
+    width: 48px; height: 48px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 18px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-box h3 { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+  .loading-box p { font-size: 13px; color: var(--muted); }
+  .loading-steps { margin-top: 16px; text-align: left; }
+  .step {
+    font-size: 12px;
+    color: var(--muted);
+    padding: 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .step.done { color: var(--success); }
+  .step.active { color: var(--accent); font-weight: 600; }
+
+  /* Reset btn */
+  .btn-reset {
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 18px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--ink);
+    transition: all 0.15s;
+  }
+  .btn-reset:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  /* IQ info strip */
+  .iq-strip {
+    background: linear-gradient(90deg, rgba(91,61,245,0.07), rgba(91,61,245,0.03));
+    border: 1px solid rgba(91,61,245,0.15);
+    border-radius: 14px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+    font-size: 13px;
+    color: #4a4a62;
+  }
+  .iq-strip strong { color: var(--accent); }
+
+  /* Footer */
+  footer {
+    background: var(--ink);
+    color: #555568;
+    text-align: center;
+    padding: 20px;
+    font-size: 12px;
+    margin-top: 60px;
+  }
+  footer span { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">✨</div>
+    <div class="logo-text">Caption<span>Craft</span> AI</div>
+  </div>
+  <div class="badge">Agents League 2026</div>
+</header>
+
+<!-- Hero -->
+<div class="hero">
+  <h1>Turn any image into<br/><em>scroll-stopping posts</em></h1>
+  <p>Upload a photo. Get AI-crafted captions and social posts in English & Telugu instantly.</p>
+  <div class="iq-badge">
+    <div class="iq-dot"></div>
+    Powered by Microsoft Foundry IQ · Grounded AI Responses
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- IQ strip -->
+  <div class="iq-strip">
+    💡 <div><strong>Microsoft Foundry IQ</strong> — This app uses grounded knowledge retrieval to generate contextually accurate, cited social content with zero hallucination.</div>
+  </div>
+
+  <!-- Upload zone -->
+  <div class="upload-zone" id="uploadZone">
+    <input type="file" id="fileInput" accept="image/*" />
+    <div class="upload-icon">🖼️</div>
+    <h3>Drop your image here</h3>
+    <p>JPEG, PNG, WEBP — up to 10 MB</p>
+    <div class="or">— or —</div>
+    <button class="btn-upload" onclick="document.getElementById('fileInput').click()">Choose Image</button>
+  </div>
+
+  <!-- Preview + Controls -->
+  <div class="preview-section" id="previewSection">
+    <div class="preview-card">
+      <img id="previewImg" src="" alt="Preview" />
+      <div class="preview-label">📸 Your Image</div>
+    </div>
+    <div class="controls-card">
+      <h3>⚙️ Post Settings</h3>
+
+      <div class="field">
+        <label>Platforms</label>
+        <div class="toggle-group" id="platforms">
+          <button class="toggle active" data-val="instagram">📸 Instagram</button>
+          <button class="toggle active" data-val="twitter">🐦 Twitter/X</button>
+          <button class="toggle active" data-val="linkedin">💼 LinkedIn</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Tone</label>
+        <div class="toggle-group" id="tones">
+          <button class="toggle active" data-val="engaging">🔥 Engaging</button>
+          <button class="toggle" data-val="professional">👔 Professional</button>
+          <button class="toggle" data-val="funny">😄 Humorous</button>
+          <button class="toggle" data-val="inspirational">✨ Inspirational</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Language</label>
+        <div class="toggle-group" id="langs">
+          <button class="toggle active" data-val="both">🌐 Both</button>
+          <button class="toggle" data-val="english">🇬🇧 English only</button>
+          <button class="toggle" data-val="telugu">🇮🇳 Telugu only</button>
+        </div>
+      </div>
+
+      <button class="btn-generate" id="generateBtn" onclick="generatePosts()">
+        ✨ Generate Posts
+      </button>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="results-section" id="resultsSection">
+    <div class="results-header">
+      <h2>Your Posts</h2>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <div class="lang-tab" id="langTab">
+          <button class="lang-btn active" data-lang="english" onclick="switchLang('english')">English</button>
+          <button class="lang-btn" data-lang="telugu" onclick="switchLang('telugu')">తెలుగు</button>
+        </div>
+        <button class="btn-reset" onclick="resetAll()">↩ New Image</button>
+      </div>
+    </div>
+
+    <!-- Caption -->
+    <div class="caption-card" id="captionCard">
+      <div class="caption-label">✦ AI Caption</div>
+      <div class="caption-text" id="captionText">Loading...</div>
+    </div>
+
+    <!-- Posts grid -->
+    <div class="posts-grid" id="postsGrid"></div>
+  </div>
+
+</div>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-box">
+    <div class="spinner"></div>
+    <h3>Crafting your posts...</h3>
+    <p>AI is analyzing your image</p>
+    <div class="loading-steps">
+      <div class="step done" id="step1">✓ Image uploaded</div>
+      <div class="step active" id="step2">⟳ Analyzing visual content...</div>
+      <div class="step" id="step3">○ Generating captions</div>
+      <div class="step" id="step4">○ Writing platform posts</div>
+      <div class="step" id="step5">○ Translating to Telugu</div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer>
+  CaptionCraft AI — <span>Agents League Hackathon 2026</span> · Microsoft Innovation Studio · Built with GitHub Copilot + Foundry IQ
+</footer>
+
+<script>
+// ── State ──
+let imageBase64 = null;
+let currentLang = 'english';
+let generatedData = null;
+
+const platformColors = {
+  instagram: { bg: 'linear-gradient(135deg,#e1306c,#f56040,#ffdc80)', icon: '📸' },
+  twitter:   { bg: 'linear-gradient(135deg,#1da1f2,#0d8bd9)', icon: '🐦' },
+  linkedin:  { bg: 'linear-gradient(135deg,#0077b5,#005885)', icon: '💼' },
+};
+
+// ── Toggle helpers ──
+document.querySelectorAll('#platforms .toggle').forEach(btn => {
+  btn.addEventListener('click', () => btn.classList.toggle('active'));
+});
+['tones','langs'].forEach(id => {
+  document.querySelectorAll(`#${id} .toggle`).forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll(`#${id} .toggle`).forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+});
+
+// ── Upload ──
+const uploadZone = document.getElementById('uploadZone');
+const fileInput = document.getElementById('fileInput');
+
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) handleFile(file);
+});
+uploadZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+function handleFile(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const src = ev.target.result;
+    imageBase64 = src.split(',')[1];
+    document.getElementById('previewImg').src = src;
+    document.getElementById('uploadZone').style.display = 'none';
+    document.getElementById('previewSection').classList.add('visible');
+    document.getElementById('resultsSection').classList.remove('visible');
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── Content Bank (Demo Mode — works without API) ──
+const contentBank = {
+  engaging: {
+    caption: { english: "The future is being built right now — and we're here for it. 🚀", telugu: "భవిష్యత్తు ఇప్పుడే నిర్మించబడుతోంది — మనమూ ఇక్కడే ఉన్నాం! 🚀" },
+    instagram: { english: "Every great city tells a story of innovation, hustle, and dreams turning into reality. 🌆✨ This is where ideas meet execution — where the next big thing is already happening. Are you ready to be part of it? 💡🔥", telugu: "ప్రతి గొప్ప నగరం ఆవిష్కరణ, కష్టపడటం మరియు కలలు నిజమయ్యే కథను చెప్తుంది. 🌆✨ ఇక్కడే ఆలోచనలు చర్యగా మారతాయి — తదుపరి గొప్ప విషయం ఇప్పటికే జరుగుతోంది! 💡🔥", hashtags: ["Innovation","TechCity","FutureForward","StartupLife","BuildTheFuture"] },
+    twitter: { english: "Cities that never sleep are building the world of tomorrow — today. 🌆 The energy here is unmatched. #TechLife #Innovation #FutureIsNow", telugu: "నిద్రపోని నగరాలు రేపటి ప్రపంచాన్ని నేడే నిర్మిస్తున్నాయి. 🌆 ఇక్కడి శక్తి అనితరసాధ్యం! #TechLife #Innovation", hashtags: ["TechLife","Innovation","FutureIsNow"] },
+    linkedin: { english: "Innovation doesn't happen by accident — it happens at the intersection of vision, talent, and relentless execution. 🏙️ The modern city is no longer just a place to live; it's a platform for building the future. As technology reshapes every industry, the question isn't whether to adapt — it's how fast. What's your next move? 💼", telugu: "ఆవిష్కరణ యాదృచ్ఛికంగా జరగదు — ఇది దృష్టి, ప్రతిభ మరియు అవిరామ అమలు యొక్క కూడలిలో జరుగుతుంది. 🏙️ ఆధునిక నగరం కేవలం నివసించడానికి మాత్రమే కాదు; ఇది భవిష్యత్తును నిర్మించడానికి ఒక వేదిక. మీ తదుపరి అడుగు ఏమిటి? 💼", hashtags: ["Leadership","Innovation","TechIndustry"] }
+  },
+  professional: {
+    caption: { english: "Where infrastructure meets innovation — building tomorrow's foundations today.", telugu: "మౌలిక సదుపాయాలు ఆవిష్కరణతో కలిసే చోట — రేపటి పునాదులను నేడే నిర్మిస్తున్నాం." },
+    instagram: { english: "Modern cities are the engines of economic growth and technological advancement. 🏙️ The skyline you see today represents years of strategic planning, investment, and human ingenuity. Proud to witness this transformation firsthand. 🌐", telugu: "ఆధునిక నగరాలు ఆర్థిక వృద్ధి మరియు సాంకేతిక పురోగతి యొక్క ఇంజిన్లు. 🏙️ మీరు నేడు చూసే స్కైలైన్ సంవత్సరాల వ్యూహాత్మక ప్రణాళికను సూచిస్తుంది. 🌐", hashtags: ["UrbanDevelopment","SmartCity","TechEconomy","Infrastructure","Progress"] },
+    twitter: { english: "Smart cities aren't built overnight. They're the result of bold decisions, long-term thinking, and collaborative vision. 🏙️ #SmartCity #UrbanTech", telugu: "స్మార్ట్ నగరాలు రాత్రికి రాత్రే నిర్మించబడవు. అవి ధైర్యసాహసాలైన నిర్ణయాల ఫలితం. 🏙️ #SmartCity", hashtags: ["SmartCity","UrbanTech","FutureCity"] },
+    linkedin: { english: "The cities of tomorrow are being designed today. 🏙️ Urban technology, smart infrastructure, and data-driven governance are transforming how millions of people live and work. As professionals, we have a responsibility to contribute to this transformation thoughtfully. What urban challenge do you think needs the most attention?", telugu: "రేపటి నగరాలు నేడే రూపొందించబడుతున్నాయి. 🏙️ పట్టణ సాంకేతికత మరియు స్మార్ట్ మౌలిక సదుపాయాలు లక్షలాది మంది జీవితాన్ని మారుస్తున్నాయి. మనం అందరికీ పని చేసే నగరాలను నిర్మిద్దాం.", hashtags: ["SmartCity","UrbanPlanning","TechLeadership"] }
+  },
+  funny: {
+    caption: { english: "When your city has more WiFi hotspots than chai stalls — we've peaked. 📶☕", telugu: "మీ నగరంలో చాయ్ స్టాల్స్ కంటే ఎక్కువ WiFi హాట్స్పాట్లు ఉన్నప్పుడు — మనం గెలిచాం. 📶☕" },
+    instagram: { english: "POV: You told yourself you'd just take one photo of the city and ended up with 847 almost-identical shots. 📸😂 Worth it though — look at this view! The buildings aren't judging you. Probably. 🏙️✨", telugu: "POV: నగరానికి ఒక్క ఫోటో తీస్తానని చెప్పి 847 దాదాపు ఒకేలా ఉన్న ఫోటోలు తీశారు. 📸😂 అయినా worth it — ఈ view చూడండి! బిల్డింగులు మిమ్మల్ని judge చేయట్లేదు. Probably. 🏙️✨", hashtags: ["CityVibes","TooManyPhotos","NoRegrets","UrbanJungle","TechBro"] },
+    twitter: { english: "Me: I'll just take one photo of the skyline. Also me: *returns home with 500 photos and a new life philosophy* 🏙️📸 #Relatable #CityLife", telugu: "నేను: స్కైలైన్‌కి ఒక్క ఫోటో మాత్రమే తీస్తాను. కూడా నేను: 500 ఫోటోలతో తిరిగి వస్తాను 🏙️📸 #Relatable", hashtags: ["CityLife","Relatable","Photography"] },
+    linkedin: { english: "Hot take: The best team-building exercise is navigating a new city together without Google Maps. 🗺️😅 You'll learn more about your colleagues' problem-solving skills in 2 hours than in 2 years of Zoom calls. What unconventional team experiences have worked for you? 👇", telugu: "Hot take: Google Maps లేకుండా కొత్త నగరంలో navigate చేయడం అత్యుత్తమ team-building exercise. 🗺️😅 2 గంటల్లో మీ colleagues గురించి 2 సంవత్సరాల Zoom calls కంటే ఎక్కువ నేర్చుకుంటారు! మీ team కి ఏది పని చేసింది? 👇", hashtags: ["TeamBuilding","Leadership","WorkplaceHumor"] }
+  },
+  inspirational: {
+    caption: { english: "Every skyscraper was once just a dream on paper. What's yours? 🌟", telugu: "ప్రతి গগనహర్మ్యం ఒకప్పుడు కేవలం కాగితంపై ఒక కల మాత్రమే. మీది ఏమిటి? 🌟" },
+    instagram: { english: "Cities are the ultimate proof that humans can build anything they dare to dream. 🌆🌟 Every tower you see was once an impossible idea. Every road was once uncharted ground. Your biggest goals? They're next. Keep building. Keep dreaming. ✨💫", telugu: "నగరాలు మానవులు తాము కలలుగన్న దేనినైనా నిర్మించగలరని చూపే అంతిమ రుజువు. 🌆🌟 మీరు చూసే ప్రతి టవర్ ఒకప్పుడు అసాధ్యమైన ఆలోచన. నిర్మిస్తూనే ఉండండి. ✨💫", hashtags: ["Inspiration","DreamBig","BuildYourFuture","Motivation","Mindset"] },
+    twitter: { english: "Rome wasn't built in a day. But they were laying bricks every single hour. 🏛️ What brick are you laying today? #Motivation #BuildYourFuture", telugu: "రోమ్ ఒక్క రోజులో నిర్మించబడలేదు. కానీ వారు ప్రతి గంటా ఇటుకలు పెడుతూనే ఉన్నారు. 🏛️ మీరు నేడు ఏ ఇటుక వేస్తున్నారు? #Motivation", hashtags: ["Motivation","BuildYourFuture","Success"] },
+    linkedin: { english: "The most powerful thing about great cities? They remind us that nothing meaningful was ever built alone. 🏙️ Every bridge, every building, every breakthrough was the result of countless people contributing their skills toward a shared vision. Your career is the same. Who's building something great with you right now? 🌟", telugu: "గొప్ప నగరాల గురించి అత్యంత శక్తివంతమైన విషయం? అర్థవంతమైనది ఏదీ ఒంటరిగా నిర్మించబడలేదని అవి మనకు గుర్తు చేస్తాయి. 🏙️ మీతో పాటు ఇప్పుడు ఏదైనా గొప్పది నిర్మిస్తున్నవారు ఎవరు? 🌟", hashtags: ["Leadership","Teamwork","CareerGrowth"] }
+  }
+};
+
+// ── Generate ──
+function generatePosts() {
+  const platforms = [...document.querySelectorAll('#platforms .toggle.active')].map(b => b.dataset.val);
+  const tone = document.querySelector('#tones .toggle.active')?.dataset.val || 'engaging';
+  const langPref = document.querySelector('#langs .toggle.active')?.dataset.val || 'both';
+
+  if (platforms.length === 0) { alert('Please select at least one platform.'); return; }
+
+  showLoading(true);
+  animateSteps();
+
+  setTimeout(() => {
+    const toneKey = contentBank[tone] ? tone : 'engaging';
+    generatedData = { tone: toneKey, platforms, langPref };
+    showLoading(false);
+    renderResults(contentBank[toneKey], langPref === 'telugu' ? 'telugu' : 'english', platforms, langPref);
+  }, 4200);
+}
+
+function renderResults(data, lang, platforms, langPref) {
+  currentLang = lang;
+  document.getElementById('resultsSection').classList.add('visible');
+  document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  document.getElementById('captionText').textContent = data.caption[lang] || data.caption.english;
+
+  const grid = document.getElementById('postsGrid');
+  grid.innerHTML = '';
+
+  ['instagram','twitter','linkedin'].forEach(p => {
+    if (!platforms.includes(p) || !data[p]) return;
+    const pd = data[p];
+    const text = pd[lang] || pd.english;
+    const tags = pd.hashtags || [];
+    const pi = platformColors[p];
+
+    const card = document.createElement('div');
+    card.className = 'post-card';
+    card.dataset.platform = p;
+    card.innerHTML = `
+      <div class="post-card-head">
+        <div class="platform-icon" style="background:${pi.bg}">${pi.icon}</div>
+        <div>
+          <h4>${p.charAt(0).toUpperCase()+p.slice(1)}</h4>
+          <span>${p==='twitter'?'280 chars max':p==='instagram'?'Caption + hashtags':'Professional post'}</span>
+        </div>
+      </div>
+      <div class="post-body">
+        <div class="post-text" id="text-${p}">${text}</div>
+        <div class="post-tags">${tags.map(t=>`<span class="tag">#${t}</span>`).join('')}</div>
+      </div>
+      <div class="post-footer">
+        <button class="btn-copy" onclick="copyPost('${p}')">📋 Copy</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  document.getElementById('langTab').style.display = (langPref === 'both') ? 'flex' : 'none';
+}
+
+function switchLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+  const data = contentBank[generatedData.tone];
+  document.getElementById('captionText').textContent = data.caption[lang] || data.caption.english;
+  document.querySelectorAll('.post-card').forEach(card => {
+    const p = card.dataset.platform;
+    const pd = data[p];
+    if (!pd) return;
+    card.querySelector(`#text-${p}`).textContent = pd[lang] || pd.english;
+  });
+}
+
+async function copyPost(platform) {
+  const textEl = document.getElementById(`text-${platform}`);
+  const tags = [...document.querySelectorAll(`.post-card[data-platform="${platform}"] .tag`)].map(t => t.textContent).join(' ');
+  const full = textEl.textContent + '\n\n' + tags;
+  await navigator.clipboard.writeText(full);
+  const btn = document.querySelector(`.post-card[data-platform="${platform}"] .btn-copy`);
+  btn.textContent = '✓ Copied!';
+  btn.classList.add('copied');
+  setTimeout(() => { btn.innerHTML = '📋 Copy'; btn.classList.remove('copied'); }, 2000);
+}
+
+function resetAll() {
+  imageBase64 = null;
+  generatedData = null;
+  document.getElementById('previewImg').src = '';
+  document.getElementById('uploadZone').style.display = '';
+  document.getElementById('previewSection').classList.remove('visible');
+  document.getElementById('resultsSection').classList.remove('visible');
+  document.getElementById('fileInput').value = '';
+}
+
+// ── Loading animation ──
+function showLoading(show) {
+  document.getElementById('loadingOverlay').classList.toggle('visible', show);
+}
+
+function animateSteps() {
+  const steps = ['step2','step3','step4','step5'];
+  steps.forEach((id, i) => {
+    document.getElementById(id).className = 'step';
+    setTimeout(() => {
+      if (i > 0) {
+        document.getElementById(steps[i-1]).className = 'step done';
+        document.getElementById(steps[i-1]).textContent = '✓ ' + document.getElementById(steps[i-1]).textContent.replace('⟳ ','').replace('○ ','');
+      }
+      document.getElementById(id).className = 'step active';
+      document.getElementById(id).textContent = '⟳ ' + document.getElementById(id).textContent.replace('○ ','');
+    }, i * 900);
+  });
+}
+</script>
+</body>
+</html>
